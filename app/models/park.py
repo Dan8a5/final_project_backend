@@ -1,19 +1,20 @@
 from sqlmodel import SQLModel, Field
-from typing import Optional, Dict
+from typing import Dict, Optional
 from datetime import datetime
 from sqlalchemy import Column, JSON
-import uuid
+from uuid import UUID
 
 class Park(SQLModel, table=True):
     __tablename__ = "parks"
     
-    id: str = Field(primary_key=True)  # UUID stored as str
+    id: UUID = Field(primary_key=True)
+    parkcode: str = Field(index=True)
+    name: str
     description: str
-    location: Dict = Field(default={}, sa_column=Column(JSON))  # jsonb type in Supabase
-    parkcode: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    latitude: float
-    longitude: float
+    location: Dict = Field(sa_column=Column(JSON))
+    created_at: datetime
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
     class Config:
         arbitrary_types_allowed = True

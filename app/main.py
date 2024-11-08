@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth
 from app.routes.parks import router as parks_router
-from app.routes.itineraries import itineraries_router  # Import itineraries router
+from app.routes.itineraries import itineraries_router
 from app.config.config import engine
 from sqlmodel import SQLModel
 
@@ -13,14 +13,8 @@ app = FastAPI(
 )
 
 async def lifespan(app: FastAPI):
-    # This is where you can initialize resources
-    # (e.g., creating tables or connecting to databases)
     SQLModel.metadata.create_all(engine)
-    
-    yield  # This is where FastAPI will pause until the app is shutting down
-
-    # This is where you can clean up resources
-    # (e.g., closing database connections)
+    yield
 
 app.lifespan = lifespan
 
@@ -40,17 +34,17 @@ async def root():
         "message": "Welcome to the National Parks Explorer API",
         "documentation": "/docs",
         "endpoints": {
-            "authentication": "/api/v1/auth",
-            "parks": "/api/v1/parks",
-            "itineraries": "/api/v1/itineraries",  # Add itineraries endpoint reference
+            "authentication": "/auth",
+            "parks": "/parks",
+            "itineraries": "/itineraries",
             "version": "1.0.0"
         }
     }
 
-# Include routers
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(parks_router, prefix="/api/v1")
-app.include_router(itineraries_router, prefix="/api/v1", tags=["itineraries"])  # Correctly reference itineraries router
+# Include routers without prefix
+app.include_router(auth.router)
+app.include_router(parks_router)
+app.include_router(itineraries_router, tags=["itineraries"])
 
 if __name__ == "__main__":
     import uvicorn

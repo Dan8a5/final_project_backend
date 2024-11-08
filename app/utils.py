@@ -1,43 +1,44 @@
-# app/utils.py
-
-# app/utils.py
-
 from fastapi import HTTPException
-from app.dependencies import supabase  # Ensure this is imported
+from sqlmodel import Session, select
+from app.models.park import Park
+from app.dependencies import get_db
 
 def get_park_data(park_code: str):
     """Retrieve park data based on park code."""
-    response = supabase.table("parks").select("*").eq("parkcode", park_code).execute()
+    print(f"Starting park data query for: {park_code}")
+    try:
+        db = next(get_db())
+        park = db.exec(select(Park).where(Park.parkcode == park_code)).first()
+        
+        if not park:
+            print(f"No data found for parkcode: {park_code}")
+            raise HTTPException(status_code=404, detail="Park not found")
 
-    # Check if the response contains any data
-    if not response.data:
-        raise HTTPException(status_code=404, detail="Park not found")
+        # Convert SQLModel object to dict with the exact structure needed
+        park_dict = {
+            "id": park.id,
+            "name": park.name,
+            "description": park.description,
+            "parkcode": park.parkcode,
+            "location": park.location,
+            "created_at": park.created_at
+        }
+        return park_dict
 
-    return response.data[0]  # Return the first result
-
-
+    except Exception as e:
+        print(f"Error in get_park_data: {str(e)}")
+        raise
 
 def get_weather_data(location: dict):
     """Retrieve weather data based on location."""
-    # This is a placeholder for actual weather data retrieval logic.
-    # You may need to call a weather API, for example, OpenWeatherMap API.
+    print(f"Processing location data: {location}")
+    lat = location.get("lat")
+    lon = location.get("lng")
     
-    # Sample implementation (you'll need to replace this with actual API calls):
-    # For the sake of example, let's assume location is a dict with latitude and longitude
-    lat = location.get("latitude")
-    lon = location.get("longitude")
-    
-    # Here you would call a weather API to get the data
-    # Example using requests (ensure you install requests if using):
-    # response = requests.get(f"https://api.weatherapi.com/v1/current.json?key=YOUR_API_KEY&q={lat},{lon}")
-
-    # Mock response for illustration
     weather_data = {
         "current": {
             "temp": 75,
             "conditions": "Sunny"
         }
     }
-    
-    # Return mock data for now
     return weather_data

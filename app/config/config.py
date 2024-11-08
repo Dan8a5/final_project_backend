@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from pathlib import Path
 from sqlmodel import SQLModel, create_engine
-from supabase import create_client, Client  # Import Supabase client
+from supabase import create_client, Client
+from typing import Optional
 
 # Load environment variables first
 env_path = Path('.') / '.env'
@@ -16,7 +17,7 @@ SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 NPS_API_KEY = os.getenv("NPS_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")  # Add default empty string
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 
 class Settings(BaseSettings):
     DATABASE_URL: str
@@ -25,11 +26,12 @@ class Settings(BaseSettings):
     # API Keys
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     NPS_API_KEY: str = os.getenv("NPS_API_KEY")
-    WEATHER_API_KEY: str = os.getenv("WEATHER_API_KEY", "")  # Add to settings class too
+    WEATHER_API_KEY: str = os.getenv("WEATHER_API_KEY", "")
 
     # Auth
     SUPABASE_URL: str = os.getenv("SUPABASE_URL")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY")
+    SUPABASE_SECRET_KEY: Optional[str] = os.getenv("SUPABASE_SECRET_KEY")
 
     class Config:
         env_file = ".env"
@@ -38,13 +40,16 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Create Supabase client
-supabase_client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+# Create Supabase client with the available key
+supabase_client: Client = create_client(
+    settings.SUPABASE_URL,
+    settings.SUPABASE_KEY  # Using regular key instead of secret key
+)
 
 # Create database engine
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=False  # Set to True if you want to see SQL queries
+    echo=False
 )
 
 # Database initialization function
