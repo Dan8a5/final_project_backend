@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from pathlib import Path
 from sqlmodel import SQLModel, create_engine
+from supabase import create_client, Client  # Import Supabase client
 
 # Load environment variables first
 env_path = Path('.') / '.env'
@@ -12,7 +13,6 @@ load_dotenv(dotenv_path=env_path)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 DATABASE_URL = os.getenv("DATABASE_URL")
 NPS_API_KEY = os.getenv("NPS_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -30,7 +30,6 @@ class Settings(BaseSettings):
     # Auth
     SUPABASE_URL: str = os.getenv("SUPABASE_URL")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY")
-    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
 
     class Config:
         env_file = ".env"
@@ -38,6 +37,9 @@ class Settings(BaseSettings):
         extra = "allow"
 
 settings = Settings()
+
+# Create Supabase client
+supabase_client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
 # Create database engine
 engine = create_engine(

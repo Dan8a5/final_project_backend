@@ -4,6 +4,7 @@ from app.models.user import User
 from app.dependencies import get_db
 from app.config.config import SUPABASE_URL, SUPABASE_KEY
 from supabase import create_client, Client
+from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from pydantic import BaseModel
 
@@ -11,6 +12,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Token dependency for protected routes
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 class UserCreate(BaseModel):
     email: str
@@ -57,6 +61,7 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login")
 async def login(credentials: UserLogin):
     try:
+        # Authenticate user with Supabase
         response = supabase.auth.sign_in_with_password({
             "email": credentials.email,
             "password": credentials.password
@@ -75,8 +80,9 @@ async def login(credentials: UserLogin):
         )
 
 @router.post("/logout")
-async def logout(token: str = Depends(get_db)):
+async def logout(token: str = Depends(oauth2_scheme)):
     try:
+        # Sign out using the provided token
         supabase.auth.sign_out()
         return {"message": "Successfully logged out"}
     except Exception as e:
@@ -85,14 +91,17 @@ async def logout(token: str = Depends(get_db)):
             detail="Error logging out"
         )
 
-# Simple endpoint to demonstrate authentication
-@router.get("/protected")
-async def protected_route(token: str = Depends(get_db)):
+@router.get("/profile")
+async def get_profile(token: str = Depends(oauth2_scheme)):
     try:
         user = supabase.auth.get_user(token)
-        return {"message": f"Hello {user.user.email}! This is a protected route."}
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        return {
+            "id": user.user.id,
+            "email": user.user.email,
+            "full_name": user.user.full_name,
+        }
     except Exception:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid token"
-        )
+        raise HTTPException(status_code=401, detail="Invalid token")
