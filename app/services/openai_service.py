@@ -58,33 +58,52 @@ class OpenAIService:
                 detail=f"Error generating description: {str(e)}"
             )
 
-    async def generate_itinerary(self, park_name: str, preferences: dict, weather_data: dict) -> str:
-        """Generate a custom itinerary based on preferences and weather."""
+    async def generate_detailed_itinerary(self, park_name: str, preferences: dict, weather_data: dict) -> str:
         try:
-            weather_info = f"Current conditions: {weather_data['current']['conditions']}, {weather_data['current']['temp']}°F"
+            system_prompt = """You are an AI assistant integrated into the National Parks Explorer application.
 
-            prompt = f"""Create a {preferences['num_days']}-day itinerary for {park_name} with:
-            Weather: {weather_info}
-            Fitness Level: {preferences.get('fitness_level', 'moderate')}
-            Activities: {', '.join(preferences.get('preferred_activities', []))}
-            Season: {preferences.get('visit_season', 'summer')}
+REQUIRED DAILY FORMAT:
+📅 Day [Number]: [Title]
 
-            Include weather-appropriate activities and alternatives based on conditions."""
+Morning:
+• [Activity 1]
+• [Activity 2]
+
+Afternoon:
+• [Activity 1]
+• [Activity 2]
+
+Evening:
+• [Activity 1]
+• [Activity 2]
+
+🏨 Recommended Hotel: [Name] (Rating: 4.4+)
+🍽️ Recommended Restaurant: [Name] (Rating: 4.4+)
+
+---
+
+Follow this exact format for each day of the itinerary, maintaining consistent spacing and bullet points."""
+            user_prompt = f"""Plan a {preferences['num_days']} day trip to {park_name} for the {preferences['visit_season']}.
+            Fitness Level: {preferences['fitness_level']}
+            Preferred Activities: {', '.join(preferences['preferred_activities'])}
+            Weather: Current conditions: {weather_data['current']['conditions']}, {weather_data['current']['temp']}°F
+            Dates: {preferences['start_date']} to {preferences['end_date']}"""
 
             response = await self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You are a national parks travel expert."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7
+                temperature=0.22,
+                max_tokens=1549
             )
             return response.choices[0].message.content
 
         except Exception as e:
             raise HTTPException(
                 status_code=500,
-                detail=f"Error generating itinerary: {str(e)}"
+                detail=f"Error generating detailed itinerary: {str(e)}"
             )
 
     async def generate_activity_recommendations(self, park_data: dict, season: str) -> str:

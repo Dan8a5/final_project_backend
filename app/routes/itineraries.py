@@ -22,8 +22,8 @@ async def get_user_itineraries(
             
         response = supabase_client.table("itineraries").select("*").eq("user_id", current_user).execute()
         
-        if response.error:
-            raise HTTPException(status_code=400, detail=str(response.error))
+        if not response.data:
+            return []
             
         return response.data
     except Exception as e:
@@ -46,35 +46,26 @@ async def create_itinerary(
         weather_data = get_weather_data(park_data["location"])
         print(f"\nWeather data retrieved: {weather_data}")
         
-        itinerary_text = await openai_service.generate_itinerary(
+        itinerary_text = await openai_service.generate_detailed_itinerary(
             park_data['name'],
-            user_preferences.dict(), 
+            user_preferences.dict(),
             weather_data
         )
-        print(f"\nGenerated itinerary:\n{itinerary_text}")
-        
-        itinerary_data = {
+
+        new_itinerary = {
             "user_id": current_user,
-            "title": f"Itinerary for {park_data['name']}",
-            "description": itinerary_text,
+            "title": f"{park_data['name']} Trip",
             "start_date": user_preferences.start_date.isoformat(),
             "end_date": user_preferences.end_date.isoformat(),
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat()
+            "description": itinerary_text
         }
-        print(f"\nPrepared itinerary data: {itinerary_data}")
+
+        response = supabase_client.table("itineraries").insert(new_itinerary).execute()
         
-        response = supabase_client.table("itineraries").insert(itinerary_data).execute()
-        print(f"\nDatabase response: {response.data}")
-        
-        # Changed error handling here
         if not response.data:
             raise HTTPException(status_code=400, detail="Failed to create itinerary")
-        
+            
         return response.data[0]
-        
+
     except Exception as e:
-        print(f"Operation failed: {str(e)}")
-        if isinstance(e, HTTPException):
-            raise e
         raise HTTPException(status_code=400, detail=str(e))

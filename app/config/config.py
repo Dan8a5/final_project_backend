@@ -43,13 +43,17 @@ settings = Settings()
 # Create Supabase client with the available key
 supabase_client: Client = create_client(
     settings.SUPABASE_URL,
-    settings.SUPABASE_KEY  # Using regular key instead of secret key
+    settings.SUPABASE_KEY
 )
 
-# Create database engine
+# Create database engine with connection pooling
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=False
+    echo=False,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    pool_size=5,
+    max_overflow=10
 )
 
 # Database initialization function

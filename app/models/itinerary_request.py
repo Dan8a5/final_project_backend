@@ -13,3 +13,13 @@ class UserPreferences(BaseModel):
     end_date: date
 
 # Removed ItineraryRequest class since we're getting user_id from token
+
+{
+    "parkcode": "yose",
+    "num_days": 4,
+    "fitness_level": "moderate",
+    "preferred_activities": ["hiking", "sightseeing", "photography"],
+    "visit_season": "spring",
+    "start_date": "2024-04-01",
+    "end_date": "2024-04-04"
+}
