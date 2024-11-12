@@ -40,7 +40,6 @@ async def create_itinerary(
             token = authorization.split(' ')[1]
             supabase_client.postgrest.auth(token)
         
-        user_id = current_user
         park_data = get_park_data(user_preferences.parkcode)
         print(f"\nPark data retrieved: {park_data}")
         
@@ -55,7 +54,7 @@ async def create_itinerary(
         print(f"\nGenerated itinerary:\n{itinerary_text}")
         
         itinerary_data = {
-            "user_id": user_id,
+            "user_id": current_user,
             "title": f"Itinerary for {park_data['name']}",
             "description": itinerary_text,
             "start_date": user_preferences.start_date.isoformat(),
@@ -68,61 +67,14 @@ async def create_itinerary(
         response = supabase_client.table("itineraries").insert(itinerary_data).execute()
         print(f"\nDatabase response: {response.data}")
         
+        # Changed error handling here
+        if not response.data:
+            raise HTTPException(status_code=400, detail="Failed to create itinerary")
+        
         return response.data[0]
         
     except Exception as e:
         print(f"Operation failed: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-@itineraries_router.put("/{itinerary_id}", response_model=Itinerary)
-async def update_itinerary(
-    itinerary_id: int,
-    updated_data: dict,
-    current_user: str = Depends(get_current_user),
-    authorization: str = Header(None)
-):
-    try:
-        if authorization and authorization.startswith('Bearer '):
-            token = authorization.split(' ')[1]
-            supabase_client.auth.set_session(token)
-            
-        existing = supabase_client.table("itineraries").select("user_id").eq("id", itinerary_id).execute()
-            
-        if not existing.data or existing.data[0]["user_id"] != current_user:
-            raise HTTPException(status_code=404, detail="Itinerary not found")
-        
-        updated_data["updated_at"] = datetime.utcnow().isoformat()
-        
-        response = supabase_client.table("itineraries").update(updated_data).eq("id", itinerary_id).execute()
-            
-        if response.error:
-            raise HTTPException(status_code=400, detail=str(response.error))
-            
-        return response.data[0]
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@itineraries_router.delete("/{itinerary_id}")
-async def delete_itinerary(
-    itinerary_id: int,
-    current_user: str = Depends(get_current_user),
-    authorization: str = Header(None)
-):
-    try:
-        if authorization and authorization.startswith('Bearer '):
-            token = authorization.split(' ')[1]
-            supabase_client.auth.set_session(token)
-            
-        existing = supabase_client.table("itineraries").select("user_id").eq("id", itinerary_id).execute()
-            
-        if not existing.data or existing.data[0]["user_id"] != current_user:
-            raise HTTPException(status_code=404, detail="Itinerary not found")
-        
-        response = supabase_client.table("itineraries").delete().eq("id", itinerary_id).execute()
-            
-        if response.error:
-            raise HTTPException(status_code=400, detail=str(response.error))
-            
-        return {"message": "Itinerary deleted successfully"}
-    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=400, detail=str(e))

@@ -12,6 +12,4 @@ class UserPreferences(BaseModel):
     start_date: date
     end_date: date
 
-class ItineraryRequest(BaseModel):
-    user_id: str  # Keep as string for UUID
-    user_preferences: UserPreferences
+# Removed ItineraryRequest class since we're getting user_id from token
