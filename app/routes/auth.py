@@ -80,16 +80,17 @@ async def login(credentials: UserLogin):
         )
 
 @router.post("/logout")
-async def logout(token: str = Depends(oauth2_scheme)):
+async def logout():
     try:
-        # Sign out using the provided token
         supabase.auth.sign_out()
         return {"message": "Successfully logged out"}
     except Exception as e:
         raise HTTPException(
             status_code=400,
-            detail="Error logging out"
+            detail=str(e)
         )
+
+
 
 @router.get("/profile")
 async def get_profile(token: str = Depends(oauth2_scheme)):
