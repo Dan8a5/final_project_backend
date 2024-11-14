@@ -174,3 +174,31 @@ async def save_new_itinerary(
     except Exception as e:
         print("Error saving itinerary:", str(e))
         raise HTTPException(status_code=400, detail=str(e))
+
+@itineraries_router.delete("/{itinerary_id}")
+async def delete_itinerary(
+    itinerary_id: int,
+    current_user: str = Depends(get_current_user),
+    authorization: str = Header(None)
+):
+    try:
+        if authorization and authorization.startswith('Bearer '):
+            token = authorization.split(' ')[1]
+            supabase_client.postgrest.auth(token)
+        
+        # First check if itinerary exists and belongs to user
+        response = supabase_client.table("itineraries").select("*").eq("id", itinerary_id).execute()
+        
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Itinerary not found")
+        
+        itinerary = response.data[0]
+        if itinerary['user_id'] != current_user:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this itinerary")
+        
+        # Delete the itinerary
+        delete_response = supabase_client.table("itineraries").delete().eq("id", itinerary_id).execute()
+        
+        return {"message": "Itinerary deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

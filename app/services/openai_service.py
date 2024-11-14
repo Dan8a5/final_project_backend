@@ -5,7 +5,16 @@ from dotenv import load_dotenv
 import os
 
 class OpenAIService:
+    """
+    Service class for handling OpenAI API interactions in the National Parks Explorer application.
+    Provides methods for generating park descriptions, itineraries, and activity recommendations.
+    """
+    
     def __init__(self):
+        """
+        Initialize the OpenAI service with API credentials from environment variables.
+        Raises exception if initialization fails.
+        """
         try:
             load_dotenv()
             self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -13,8 +22,20 @@ class OpenAIService:
             raise Exception(f"Failed to initialize OpenAI client: {str(e)}")
 
     async def generate_park_description(self, park_data: dict) -> str:
-        """Generate enhanced park description using GPT-4."""
+        """
+        Generate an enhanced park description using GPT-4.
+        
+        Args:
+            park_data (dict): Dictionary containing park information
+            
+        Returns:
+            str: Generated park description with structured sections
+            
+        Raises:
+            HTTPException: If generation fails
+        """
         try:
+            # Construct prompt with required sections
             prompt = f"""
             Create an engaging description for {park_data['name']}.
             Include the following sections:
@@ -35,6 +56,7 @@ class OpenAIService:
             {park_data}
             """
 
+            # Make API call to OpenAI
             response = await self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
@@ -47,8 +69,8 @@ class OpenAIService:
                         "content": prompt
                     }
                 ],
-                temperature=0.7,
-                max_tokens=500
+                temperature=0.7,  # Control randomness in response
+                max_tokens=500    # Limit response length
             )
             return response.choices[0].message.content
 
@@ -59,17 +81,33 @@ class OpenAIService:
             )
 
     async def generate_detailed_itinerary(self, park_name: str, preferences: dict, weather_data: dict) -> str:
+        """
+        Generate a detailed park visit itinerary based on user preferences and weather.
+        
+        Args:
+            park_name (str): Name of the park
+            preferences (dict): User preferences including duration, activities, etc.
+            weather_data (dict): Current weather conditions
+            
+        Returns:
+            str: Structured daily itinerary
+            
+        Raises:
+            HTTPException: If generation fails
+        """
         try:
+            # Determine accommodation format based on camping preference
             is_camping = 'camping' in preferences['preferred_activities']
             accommodation_format = "🏨 Recommended Campsite: [Name]" if is_camping else "🏨 Recommended Hotel: [Name] (Rating: 4.4+)"
 
+            # Define system prompt with required formatting
             system_prompt = f"""You are an AI assistant integrated into the National Parks Explorer application.
 
 REQUIRED DAILY FORMAT:
 📅 Day [Number]: [Title]
 
 Morning:
-• [Activity 1 with trail name and distance if applicable (e.g., "Hike Bright Angel Trail - 6 miles round trip")]
+• [Activity 1 with trail name and distance if applicable]
 • [Activity 2]
 
 Afternoon:
@@ -85,27 +123,23 @@ Evening:
 
 ---
 
-Follow this exact format for each day of the itinerary. Always include specific trail names and distances for hiking activities. Adjust trail distances based on fitness level."""
+Follow this exact format for each day of the itinerary."""
 
+            # Construct user prompt with specific details
             user_prompt = f"""Plan a {preferences['num_days']} day trip to {park_name} for the {preferences['visit_season']}.
             Fitness Level: {preferences['fitness_level']} (adjust trail distances accordingly)
             Preferred Activities: {', '.join(preferences['preferred_activities'])}
             Weather: Current conditions: {weather_data['current']['conditions']}, {weather_data['current']['temp']}°F
-            Dates: {preferences['start_date']} to {preferences['end_date']}
-            
-            Include specific trail names and distances for all hiking activities.
-            For {preferences['fitness_level']} fitness level:
-            - Easy: 1-3 miles per hike
-            - Moderate: 3-7 miles per hike
-            - Difficult: 7-12+ miles per hike"""
+            Dates: {preferences['start_date']} to {preferences['end_date']}"""
 
+            # Generate itinerary via OpenAI
             response = await self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.22,
+                temperature=0.22,  # Lower temperature for more consistent formatting
                 max_tokens=1549
             )
             return response.choices[0].message.content
@@ -117,8 +151,21 @@ Follow this exact format for each day of the itinerary. Always include specific 
             )
 
     async def generate_activity_recommendations(self, park_data: dict, season: str) -> str:
-        """Generate season-specific activity recommendations."""
+        """
+        Generate season-specific activity recommendations for a park.
+        
+        Args:
+            park_data (dict): Park information
+            season (str): Season for activities (e.g., "summer", "winter")
+            
+        Returns:
+            str: Generated activity recommendations
+            
+        Raises:
+            HTTPException: If generation fails
+        """
         try:
+            # Construct prompt for seasonal activities
             prompt = f"""
             Create activity recommendations for {park_data['name']} during {season}.
             Include:
@@ -131,6 +178,7 @@ Follow this exact format for each day of the itinerary. Always include specific 
             {park_data}
             """
 
+            # Generate recommendations via OpenAI
             response = await self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
