@@ -60,34 +60,44 @@ class OpenAIService:
 
     async def generate_detailed_itinerary(self, park_name: str, preferences: dict, weather_data: dict) -> str:
         try:
-            system_prompt = """You are an AI assistant integrated into the National Parks Explorer application.
+            is_camping = 'camping' in preferences['preferred_activities']
+            accommodation_format = "🏨 Recommended Campsite: [Name]" if is_camping else "🏨 Recommended Hotel: [Name] (Rating: 4.4+)"
+
+            system_prompt = f"""You are an AI assistant integrated into the National Parks Explorer application.
 
 REQUIRED DAILY FORMAT:
 📅 Day [Number]: [Title]
 
 Morning:
-• [Activity 1]
+• [Activity 1 with trail name and distance if applicable (e.g., "Hike Bright Angel Trail - 6 miles round trip")]
 • [Activity 2]
 
 Afternoon:
-• [Activity 1]
+• [Activity 1 with trail name and distance if applicable]
 • [Activity 2]
 
 Evening:
 • [Activity 1]
 • [Activity 2]
 
-🏨 Recommended Hotel: [Name] (Rating: 4.4+)
+{accommodation_format}
 🍽️ Recommended Restaurant: [Name] (Rating: 4.4+)
 
 ---
 
-Follow this exact format for each day of the itinerary, maintaining consistent spacing and bullet points."""
+Follow this exact format for each day of the itinerary. Always include specific trail names and distances for hiking activities. Adjust trail distances based on fitness level."""
+
             user_prompt = f"""Plan a {preferences['num_days']} day trip to {park_name} for the {preferences['visit_season']}.
-            Fitness Level: {preferences['fitness_level']}
+            Fitness Level: {preferences['fitness_level']} (adjust trail distances accordingly)
             Preferred Activities: {', '.join(preferences['preferred_activities'])}
             Weather: Current conditions: {weather_data['current']['conditions']}, {weather_data['current']['temp']}°F
-            Dates: {preferences['start_date']} to {preferences['end_date']}"""
+            Dates: {preferences['start_date']} to {preferences['end_date']}
+            
+            Include specific trail names and distances for all hiking activities.
+            For {preferences['fitness_level']} fitness level:
+            - Easy: 1-3 miles per hike
+            - Moderate: 3-7 miles per hike
+            - Difficult: 7-12+ miles per hike"""
 
             response = await self.client.chat.completions.create(
                 model="gpt-4",
