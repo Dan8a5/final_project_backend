@@ -15,18 +15,20 @@ itineraries_router = APIRouter(prefix="/itineraries", tags=["itineraries"])
 openai_service = OpenAIService()
 pdf_service = PDFService()
 
-# Update the ItineraryCreate model to match the exact data types from frontend
 class ItineraryCreate(BaseModel):
     title: str
     description: str
     park_code: str
     start_date: str  # Using str since frontend sends date as string
-    end_date: str    # Using str since frontend sends date as string
+    end_date: str    
     fitness_level: str
     preferred_activities: List[str]
     visit_season: str
     trip_details: str  # Changed from dict to str to match frontend textarea input
 
+class ItineraryUpdate(BaseModel):
+    title: str
+    description: str
 
 @itineraries_router.get("/user_itineraries")
 async def get_user_itineraries(current_user: str = Depends(get_current_user)):
@@ -155,7 +157,6 @@ async def save_new_itinerary(
     authorization: str = Header(None)
 ):
     try:
-        # Set authentication token for Supabase client
         if authorization and authorization.startswith('Bearer '):
             token = authorization.split(' ')[1]
             supabase_client.postgrest.auth(token)
@@ -186,7 +187,6 @@ async def delete_itinerary(
             token = authorization.split(' ')[1]
             supabase_client.postgrest.auth(token)
         
-        # First check if itinerary exists and belongs to user
         response = supabase_client.table("itineraries").select("*").eq("id", itinerary_id).execute()
         
         if not response.data:
@@ -196,9 +196,38 @@ async def delete_itinerary(
         if itinerary['user_id'] != current_user:
             raise HTTPException(status_code=403, detail="Not authorized to delete this itinerary")
         
-        # Delete the itinerary
         delete_response = supabase_client.table("itineraries").delete().eq("id", itinerary_id).execute()
         
         return {"message": "Itinerary deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@itineraries_router.put("/{itinerary_id}")
+async def update_itinerary(
+    itinerary_id: int,
+    itinerary_update: ItineraryUpdate,
+    current_user: str = Depends(get_current_user),
+    authorization: str = Header(None)
+):
+    try:
+        if authorization and authorization.startswith('Bearer '):
+            token = authorization.split(' ')[1]
+            supabase_client.postgrest.auth(token)
+        
+        response = supabase_client.table("itineraries").select("*").eq("id", itinerary_id).execute()
+        
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Itinerary not found")
+        
+        itinerary = response.data[0]
+        if itinerary['user_id'] != current_user:
+            raise HTTPException(status_code=403, detail="Not authorized to edit this itinerary")
+        
+        update_response = supabase_client.table("itineraries").update({
+            "title": itinerary_update.title,
+            "description": itinerary_update.description
+        }).eq("id", itinerary_id).execute()
+        
+        return {"message": "Itinerary updated successfully", "itinerary": update_response.data[0]}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

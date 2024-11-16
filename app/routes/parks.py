@@ -10,7 +10,7 @@ router = APIRouter(prefix="/parks", tags=["parks"])
 @router.get("", response_model=List[Park])
 async def get_parks(
     skip: int = 0,
-    limit: int = 10,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
     """
