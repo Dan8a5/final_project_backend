@@ -15,6 +15,7 @@ class Park(SQLModel, table=True):
     created_at: datetime
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    official_website: str
 
     class Config:
         arbitrary_types_allowed = True
