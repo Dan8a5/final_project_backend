@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth
 from app.routes.parks import router as parks_router
 from app.routes.itineraries import itineraries_router
+from app.routes.contact import contact_router
 from app.config.config import engine
 from sqlmodel import SQLModel
 
@@ -37,6 +38,7 @@ async def root():
             "authentication": "/auth",
             "parks": "/parks",
             "itineraries": "/itineraries",
+            "contact": "/contact",
             "version": "1.0.0"
         }
     }
@@ -45,6 +47,7 @@ async def root():
 app.include_router(auth.router)
 app.include_router(parks_router)
 app.include_router(itineraries_router, tags=["itineraries"])
+app.include_router(contact_router)
 
 if __name__ == "__main__":
     import uvicorn
