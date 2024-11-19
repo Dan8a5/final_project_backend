@@ -140,7 +140,7 @@ Follow this exact format for each day of the itinerary."""
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.22,  # Lower temperature for more consistent formatting
-                max_tokens=1549
+                max_tokens=3000
             )
             return response.choices[0].message.content
 
