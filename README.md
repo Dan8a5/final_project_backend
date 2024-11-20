@@ -17,8 +17,8 @@ Trail Trek is a web application designed to help users explore all 63 US Nationa
 - React
 - React Router DOM
 - Tailwind CSS
-- Lucide React Icons
-- React Spring (for animations)
+- Lucide React 
+- React Spring 
 
 ### Backend
 - FastAPI
@@ -27,8 +27,8 @@ Trail Trek is a web application designed to help users explore all 63 US Nationa
 - Python
 
 ### Authentication
-- JWT (JSON Web Tokens)
-- Bcrypt for password hashing
+- JWT 
+- Bcrypt 
 
 ### APIs
 - National Park Service API
@@ -39,8 +39,3 @@ Trail Trek is a web application designed to help users explore all 63 US Nationa
 - Git/GitHub
 - npm
 
-## Getting Started
-
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/trail-trek.git
