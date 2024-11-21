@@ -13,6 +13,7 @@ requests = "*"
 supabase = "*"
 python-dotenv = "*"
 pydantic-settings = "*"
+reportlab = "*"
 
 [dev-packages]
 
