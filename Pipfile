@@ -11,6 +11,7 @@ psycopg2-binary = "*"
 openai = "*"
 requests = "*"
 supabase = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
