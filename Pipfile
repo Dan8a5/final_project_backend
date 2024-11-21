@@ -12,6 +12,7 @@ openai = "*"
 requests = "*"
 supabase = "*"
 python-dotenv = "*"
+pydantic-settings = "*"
 
 [dev-packages]
 
