@@ -19,15 +19,23 @@ async def lifespan(app: FastAPI):
 
 app.lifespan = lifespan
 
-# Configure CORS
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+    "https://trailtrek.netlify.app/"
+]
+
+# Add the CORS middleware...
+# ...this will pass the proper CORS headers
+# https://fastapi.tiangolo.com/tutorial/middleware/
+# https://fastapi.tiangolo.com/tutorial/cors/
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update this with your frontend URL in production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Root route
 @app.get("/")
 async def root():
