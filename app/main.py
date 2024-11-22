@@ -22,7 +22,7 @@ app.lifespan = lifespan
 origins = [
     "http://localhost",
     "http://localhost:5173",
-    "https://trailtrek.netlify.app/"
+    "https://trailtrek.netlify.app"
 ]
 
 # Add the CORS middleware...
